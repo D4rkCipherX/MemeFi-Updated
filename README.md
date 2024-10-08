@@ -2,7 +2,6 @@
  # MemeFi Bot
 Auto Tap MemeFi Bot  
 
-Join Here : [MemeFiBot](https://t.me/memefi_coin_bot)
 TUTORIAL - https://youtu.be/oIECtgvAXg0
 
 ## Installation
